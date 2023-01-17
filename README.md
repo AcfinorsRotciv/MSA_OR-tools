@@ -10,7 +10,7 @@ Nous avons choisi de traiter le problème de l'alignement multiple de séquences
 Ici, nous présentons un ensemble de scripts python:
 - ```model.py``` : Contient les définitions des modèles et des fonctions utilisées dans les scripts de calculs
 - ```MSA.py``` : Réalise les calculs permettant d'avoir les différents alignements en alignements multiples
-- ```LCS.py``` : Réalise les calculs permettant d'avoir les plus sous-séquences communes
+- ```LCS.py``` : Réalise les calculs permettant d'avoir les plus longues sous-séquences communes
 - ```brute_force.py``` : Calcule les scores de tous les alignements possibles sur 3 séquences et donne l'optimal
 
 
