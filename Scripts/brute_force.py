@@ -1,6 +1,6 @@
 from itertools import combinations_with_replacement
 sequences = ['ATTCG', 'ATTAACG', 'ATGCG']
-#sequences = ['ATTCG', 'ATTACACG', 'ATCGC']
+
 
 dico_score = {
     'AA': 3,
@@ -24,12 +24,14 @@ dico_score = {
 def insert_dash(chaine, pos):
   return chaine[:pos]+'-'+chaine[pos:]
 
-#
+#Fonction de création d'un alignement à partir d'une séquence et de positions de gap
 def create_alignment(seq, gap):
   new_seq = seq
   for i in range(len(gap)):
     new_seq = insert_dash(new_seq, gap[i]+i)
   return new_seq
+
+#Fonction calculant le score d'alignement d'un alignement multiple de 3 séquences
 def score_calcul(alignment):
   gap_num = 0
   gap_num += alignment[0].count('-')
@@ -55,11 +57,15 @@ score_max = 0
 align_max = ''
 min_len = len(sequences[0])
 
+#Estimation du nombre maximale de gap insérable dans l'alignement
 for seq in sequences:
   if len(seq) > min_len:
     min_len = len(seq)
 max_len = int(min_len*1.5) + (min_len % 2) - 1
+
+
 counter = 0
+#Calcul de tous les arrangements de gap possibles dans les alignements
 for ngaps in range(min_len,max_len+1):
   print(f"nagps : {ngaps}")
   for i in combinations_with_replacement(range(len(sequences[0])+1),ngaps - len(sequences[0])):
