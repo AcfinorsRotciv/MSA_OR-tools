@@ -207,7 +207,7 @@ def multiple_sequence_alignment_ILP(sequences, gap_penalty):
         sequences: A list of sequences.
 
     Returns:
-        A list representing the longest common subsequence of the sequences.
+        A list representing the multiple sequence alignment.
     """
     
     # Solver
