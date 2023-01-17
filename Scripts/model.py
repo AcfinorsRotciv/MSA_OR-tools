@@ -3,7 +3,7 @@ import numpy as np
 import copy
 import pickle
 
-#Générateur de séquences complètement aléatoires
+# Générateur de séquences complètement aléatoires
 def seq_generator(alphabet, seq_size, seq_number):
   gen_list = []
   for i in range(seq_number):
@@ -11,7 +11,7 @@ def seq_generator(alphabet, seq_size, seq_number):
     gen_list.append(seq)
   return gen_list
 
-#Générateur de séquences mutées à partir d'une séquence "père" générée aléatoirement
+# Générateur de séquences mutées à partir d'une séquence "père" générée aléatoirement
 def seq_generator_mutate(alphabet, seq_size, seq_number, muta_matrix):
   gen_list = []
   taille = seq_size
@@ -21,20 +21,20 @@ def seq_generator_mutate(alphabet, seq_size, seq_number, muta_matrix):
     pos = 0
     while pos<len(seq):
       rando = np.random.rand()
-      #Ajout d'une insertion/délétion
+      # Ajout d'une insertion/délétion
       if rando < muta_matrix['indel']:
-        #Insertion
+        # Insertion
         if np.random.rand() < 0.5:
           seq_new.append(np.random.choice(list(alphabet)))
           pos -= 1
-        #Délétion car rien est ajouté
+        # Délétion car rien est ajouté
       else:
-        #Détection d'une mutation
+        # Détection d'une mutation
         if rando < muta_matrix['mut']:
-          #Ajout d'un caractère aléatoire
+          # Ajout d'un caractère aléatoire
           seq_new.append(np.random.choice(list(alphabet)))
         else:
-          #Ajout du bon caractère
+          # Ajout du bon caractère
           seq_new.append(seq[pos])
       pos += 1
     gen_list.append(''.join(seq_new))
@@ -42,29 +42,28 @@ def seq_generator_mutate(alphabet, seq_size, seq_number, muta_matrix):
 
 def longest_common_subsequence(sequences):
     """
-    Finds the longest common subsequence of a list of sequences.
+    Touve la plus longue sous-séquence commune.
 
     Args:
-        sequences: A list of sequences.
+        sequences: Liste de sequences.
 
     Returns:
-        A list representing the longest common subsequence of the sequences.
+        Une liste qui représente la plus longue sous-séquence commune entre les séquences.
     """
-    # Solver
+    # Crée un solveur de programmation linéaire en nombre entier avec la solution SCIP
     # Create the mip solver with the SCIP backend.
     solver = pywraplp.Solver.CreateSolver('SCIP')
 
     if not solver:
         return
-
-    # Create a solver
-    # solver = pywraplp.Solver('SolveIntegerProblem',
-    #                          pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
-
+      
+    # Definition des variables de décision (entières) et lecture des données
     # Define the decision variables and reading the data
 
-    # declaration of match variable m and varaible encoding the fact that the match belongs to the LCS
+    # déclaration d'une variable qui représente les matchs entre des symboles de séquences consécutives
+    # declaration of match variable m and variable encoding the fact that the match belongs to the LCS
     # mi,j,p,q is set to 1 for each pair of consecutive sequences si and sj if si,p = sj,p 0 else.
+    
     m = []
     x = {}
     for i in range(len(sequences)):
@@ -78,6 +77,7 @@ def longest_common_subsequence(sequences):
           m_ij.append(m_ijp)
         m.append(m_ij)
 
+    # Définition des contraintes
     # Define the constraints
 
     # Constraint #1
@@ -176,6 +176,8 @@ def longest_common_subsequence(sequences):
             # test si les solutions respectent les contraintes
             # if m[i][p][q] == 1:
             #   print(f'm_i{i}_j{i+1}_p{p}_q{q} = {m[i][p][q]}')
+            
+      # variable permettant de récupérer les résultats du solveur sur une instance du problème
       retour = {}
       retour['time']=solver.wall_time()/1000
       retour['iter']=solver.iterations()
@@ -186,6 +188,7 @@ def longest_common_subsequence(sequences):
 
     return retour
 
+# encodage de la matrice de substitution "BLOSUM 62" sous forme de dictionnaire
 with open("BLOSUM62", "r") as f:
   index = f.readline().strip("\n").replace("  ", " ").strip().split(" ")
   BLOSUM = {}
@@ -197,7 +200,8 @@ with open("BLOSUM62", "r") as f:
 
 def multiple_sequence_alignment_ILP(sequences, gap_penalty):
     """
-    Finds the longest common subsequence of a list of sequences.
+    Finds the optimal multiple sequence alignment.
+    Trouve l'alignement multiple de séquences optimal
 
     Args:
         sequences: A list of sequences.
@@ -205,18 +209,23 @@ def multiple_sequence_alignment_ILP(sequences, gap_penalty):
     Returns:
         A list representing the longest common subsequence of the sequences.
     """
+    
     # Solver
-    # Create the mip solver with the SCIP backend.
-    solver = pywraplp.Solver.CreateSolver('SCIP')
-    if not solver:
-        return
-
-    gap_penalty = -4
-    # Solver
+    # Create the mip solver
     solver = pywraplp.Solver('MultipleSequenceAlignment',
                               pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+    if not solver:
+        return
+    
+    # Paramétrage de la limite de temps
+    # Time-limit setting
     
     solver.SetTimeLimit(600*1000)
+    
+    # Valeur de la pénalité de gap
+    # Gap penalty value
+    gap_penalty = -4
+    
     # Define the decision variables
     x = {}
     # binary variables, x_i,j,p,q = 1 if symbols si[p] and sj[q] are part of a multiple alignment
@@ -274,11 +283,18 @@ def multiple_sequence_alignment_ILP(sequences, gap_penalty):
 
 
     # Define the objective function
-    # Maximize the alignment score
-
+    # Maximisation de la somme de 3 sommes diiférentes:
+    # 1ère somme: pour chaque variable codant pour l'appartenance d'un symbole à l'alignement multiple (entre deux séquences consécutives),
+    # cette variable est pondérée par son coefficient dans la matrice de substitution.
     objective = [solver.Sum([x[i, i+1, p, q] * BLOSUM[sequences[i][p] + sequences[i+1][q]] for i in range(len(sequences) - 1) for p in range(len(sequences[i])) for q in range(len(sequences[i+1]))])]
+    
+    # 2ème somme: si un symbole d'une séquence i n'est aligné avec aucun symbole de la séquence i+1, on comptabilise un gap (-4)
     objective.append(gap_penalty * solver.Sum([1 - solver.Sum([x[i, i+1, p, q] for q in range(len(sequences[i+1]))]) for i in range(len(sequences) - 1) for p in range(len(sequences[i]))]))
+    
+    # 3ème somme: si un symbole d'une séquence i+1 n'est aligné avec aucun symbole de la séquence i, on comptabilise un gap (-4)
     objective.append(gap_penalty * solver.Sum([1 - solver.Sum([x[i, i+1, p, q] for p in range(len(sequences[i]))]) for i in range(len(sequences) - 1) for q in range(len(sequences[i+1]))]))
+    
+    # Maximize the alignment score
     solver.Maximize(solver.Sum(objective))
 
     # Solve the problem
@@ -291,6 +307,7 @@ def multiple_sequence_alignment_ILP(sequences, gap_penalty):
       print('Problem solved in %d branch-and-bound nodes' % solver.nodes())
       print(solver.Objective().Value())
       
+      # Récupération de l'alignement multiple
       max_seq = 0
       for i in sequences:
         if (len(i) > max_seq):
