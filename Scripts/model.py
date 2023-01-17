@@ -3,6 +3,7 @@ import numpy as np
 import copy
 import pickle
 
+#Générateur de séquences complètement aléatoires
 def seq_generator(alphabet, seq_size, seq_number):
   gen_list = []
   for i in range(seq_number):
@@ -10,23 +11,32 @@ def seq_generator(alphabet, seq_size, seq_number):
     gen_list.append(seq)
   return gen_list
 
+#Générateur de séquences mutées à partir d'une séquence "père" générée aléatoirement
 def seq_generator_mutate(alphabet, seq_size, seq_number, muta_matrix):
   gen_list = []
   taille = seq_size
   seq = ''.join(list(np.random.choice(list(alphabet), taille)))
   for i in range(seq_number):
     seq_new = []
-    for pos in range(len(seq)):
+    pos = 0
+    while pos<len(seq):
       rando = np.random.rand()
+      #Ajout d'une insertion/délétion
       if rando < muta_matrix['indel']:
+        #Insertion
         if np.random.rand() < 0.5:
           seq_new.append(np.random.choice(list(alphabet)))
           pos -= 1
+        #Délétion car rien est ajouté
       else:
+        #Détection d'une mutation
         if rando < muta_matrix['mut']:
+          #Ajout d'un caractère aléatoire
           seq_new.append(np.random.choice(list(alphabet)))
         else:
+          #Ajout du bon caractère
           seq_new.append(seq[pos])
+      pos += 1
     gen_list.append(''.join(seq_new))
   return gen_list
 
